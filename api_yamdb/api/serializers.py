@@ -16,7 +16,7 @@ class UserMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'bio')
-        read_only_fields = ('username', 'email')  # Логин и email нельзя менять самому
+        read_only_fields = ('username', 'email', 'role')  # Логин и email нельзя менять самому
 
 
 class TitlesSerializer(serializers.ModelSerializer):
@@ -90,4 +90,11 @@ class UserCreationSerializer(serializers.Serializer):
     def validate_username(self, value):
         if value.lower() == 'me':
             raise serializers.ValidationError("Нельзя использовать 'me' как username")
+        if len(value) > 150:
+            raise serializers.ValidationError("Username не может быть длиннее 150 символов")
+        return value
+    
+    def validate_email(self, value):
+        if len(value) > 254:
+            raise serializers.ValidationError("Email не может быть длиннее 254 символов")
         return value

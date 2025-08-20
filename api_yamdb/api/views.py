@@ -16,12 +16,13 @@ from .serializers import (
     ReviewsSerializer, CommentsSerializer, CustomUserSerializer,
     UserMeSerializer, UserCreationSerializer,
 )
-from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
+from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsAdmin, IsModerator
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
+    permission_classes = [IsAdmin]
 
     @action(
         detail=False,
@@ -121,7 +122,11 @@ class SignUpView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            user = serializer.save()
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=None  # пароль не нужен для начальной регистрации
+            )
             confirm_code = default_token_generator.make_token(user)
             user.confirmation_code = confirm_code
             user.save()
@@ -136,6 +141,7 @@ class SignUpView(APIView):
                 serializer.data,
                 status=status.HTTP_200_OK
             )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TokenView(APIView):
