@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -23,6 +23,9 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     permission_classes = [IsAdmin]
+    lookup_field = 'username'
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'email']
 
     @action(
         detail=False,
@@ -106,6 +109,9 @@ class SignUpView(APIView):
 
     def post(self, request):
         serializer = UserCreationSerializer(data=request.data)
+
+        if not serializer.is_valid():  # ← ЕСЛИ НЕ ВАЛИДНО
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
             email = serializer.validated_data.get('email')

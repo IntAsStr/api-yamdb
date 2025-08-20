@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import RegexValidator
 
 
 class CustomUser(AbstractUser):
@@ -20,7 +21,11 @@ class CustomUser(AbstractUser):
         max_length=150,
         unique=True,
         blank=False,
-        null=False
+        null=False,
+        validators=[RegexValidator(
+            regex=r'^[\w.@+-]+\Z',
+            message='Username содержит недопустимые символы'
+        )]
     )
     role = models.CharField(
         verbose_name='Роль',

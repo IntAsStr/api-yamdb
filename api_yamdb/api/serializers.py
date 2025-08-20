@@ -10,9 +10,20 @@ class CustomUserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'bio', 'role')
         read_only_fields = ('role',)
 
+    def create(self, validated_data):
+        # Создаем пользователя с правильной ролью
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=None,
+            role=validated_data.get('role', 'user')
+        )
+        return user
+
 
 class UserMeSerializer(serializers.ModelSerializer):
     """Упрощенный сериализатор для редактирования своего профиля"""
+    role = serializers.CharField(read_only=True)
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'bio')
