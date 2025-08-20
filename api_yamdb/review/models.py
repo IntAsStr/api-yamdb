@@ -1,11 +1,9 @@
 from django.db import models
-
+from django.conf import settings
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 
-User = get_user_model()
 
 class Category(models.Model):
     title = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
@@ -71,7 +69,7 @@ class Reviews(models.Model):
     )
     text = models.TextField('Текс обзора')
     author = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         verbose_name='Автор',
         on_delete=models.CASCADE,
         related_name='reviews'
@@ -88,14 +86,28 @@ class Reviews(models.Model):
     class Meta:
         verbose_name = 'Обзор'
         verbose_name_plural = 'Обзоры'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review_per_author'
+            )
+        ]
     
     def __str__(self):
         return self.title[:20]
 
 
 class Comments(models.Model):
-    author = models.ForeignKey(User, verbose_name='Автор', on_delete=models.SET_NULL, null=True)
-    review = models.ForeignKey(Reviews, verbose_name='Обзор')
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='Автор',
+        on_delete=models.SET_NULL,
+        null=True)
+    review = models.ForeignKey(
+        Reviews,
+        verbose_name='Обзор',
+        on_delete=models.SET_NULL,
+        null=True)
     text = models.TextField('Текст коментария')
     pub_date = models.DateTimeField(
         'Дата публикации комментария',
