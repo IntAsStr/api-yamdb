@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import viewsets, permissions, status, filters
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -19,6 +20,10 @@ from .serializers import (
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly, IsAdmin, IsModerator
 
 
+class StandardPagination(PageNumberPagination):
+    page_size = 10
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
@@ -26,6 +31,8 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'email']
+    pagination_class = StandardPagination
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     @action(
         detail=False,
@@ -113,29 +120,55 @@ class SignUpView(APIView):
         if not serializer.is_valid():  # ← ЕСЛИ НЕ ВАЛИДНО
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            email = serializer.validated_data.get('email')
-            username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        username = serializer.validated_data.get('username')
 
-            if User.objects.filter(email=email).exists():
-                return Response(
-                    {'error': 'Пользователь с таким email уже существует'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if User.objects.filter(username=username).exists():
-                return Response(
-                    {'error': 'Пользователь с таким username уже существует'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+        user_exists = User.objects.filter(
+            username=username, 
+            email=email
+        ).first()
+
+        # Если пользователь уже существует, генерируем новый код и возвращаем 200
+        if user_exists:
+            confirm_code = default_token_generator.make_token(user_exists)
+            user_exists.confirmation_code = confirm_code
+            user_exists.save()
+                
+            send_mail(
+                'Confirmation code',
+                f'Your new code {confirm_code}',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False
+            )
+            return Response(
+                {'email': email, 'username': username},
+                status=status.HTTP_200_OK
+            )
+        
+        # Если нет полного совпадения, проверяем конфликты отдельно
+        if User.objects.filter(email=email).exclude(username=username).exists():
+            return Response(
+                {'error': 'Пользователь с таким email уже существует'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if User.objects.filter(username=username).exclude(email=email).exists():
+            return Response(
+                {'error': 'Пользователь с таким username уже существует'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Если конфликтов нет, создаем нового пользователя
+        try:
             user = User.objects.create_user(
                 username=username,
                 email=email,
-                password=None  # пароль не нужен для начальной регистрации
+                password=None
             )
             confirm_code = default_token_generator.make_token(user)
             user.confirmation_code = confirm_code
             user.save()
+                
             send_mail(
                 'Confirmation code',
                 f'Your code {confirm_code}',
@@ -144,10 +177,15 @@ class SignUpView(APIView):
                 fail_silently=False
             )
             return Response(
-                serializer.data,
+                {'email': email, 'username': username},
                 status=status.HTTP_200_OK
+            )     
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class TokenView(APIView):
@@ -157,6 +195,12 @@ class TokenView(APIView):
         username = request.data.get('username')
         confirmation_code = request.data.get('confirmation_code')
         
+        if not username or not confirmation_code:
+            return Response(
+                {'error': 'Необходимо указать username и confirmation_code'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -165,14 +209,21 @@ class TokenView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Проверяем код подтверждения
+        if not default_token_generator.check_token(user, confirmation_code):
+            return Response(
+                {'error': 'Неверный код подтверждения'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Генерация JWT токена
         if user.confirmation_code == confirmation_code:
-            # Генерация JWT токена
             refresh = RefreshToken.for_user(user)
             return Response({
                 'token': str(refresh.access_token),
             })
-        
-        return Response(
-            {'error': 'Неверный код подтверждения'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            return Response(
+                {'error': 'Неверный код подтверждения'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
