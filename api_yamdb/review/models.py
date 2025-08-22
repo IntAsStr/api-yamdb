@@ -6,7 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class Category(models.Model):
-    title = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
+    name = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
     slug = models.SlugField('Слаг', unique=True, help_text='Выберите Slug')
     
     class Meta:
@@ -14,11 +14,11 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[:20]
+        return self.name[:20]
 
 
 class Genre(models.Model):
-    title = models.CharField(
+    name = models.CharField(
         'Название',
         max_length=64,
         help_text='Выберите название жанра'
@@ -30,13 +30,13 @@ class Genre(models.Model):
         verbose_name_plural = 'Жанры'
 
     def __str__(self):
-        return self.title[:20]
+        return self.name[:20]
 
 
 
 
 class Titles(models.Model):
-    title = models.CharField('Произведение', max_length=64, help_text='Выберите название произведения')
+    name = models.CharField('Произведение', max_length=64, help_text='Выберите название произведения')
     year = models.IntegerField('Год произведения', null=True, blank=True)
     description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
@@ -57,7 +57,7 @@ class Titles(models.Model):
         verbose_name_plural = 'Произведения'
 
     def __str__(self):
-        return self.title[:20]
+        return self.name[:20]
 
 
 class Reviews(models.Model):
