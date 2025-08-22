@@ -7,11 +7,23 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             (request.user.is_authenticated and request.user.is_admin)
         )
 
+# class IsAuthorOrReadOnly(permissions.BasePermission):
+#     def has_object_permission(self, request, view, obj):
+#         return (
+#             request.method in permissions.SAFE_METHODS or
+#             obj.author == request.user
+#         )
 class IsAuthorOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
+        # Разрешить безопасные методы (GET, HEAD, OPTIONS)
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        
+        # Разрешить автору, администраторам и модераторам
         return (
-            request.method in permissions.SAFE_METHODS or
             obj.author == request.user
+            or request.user.is_admin
+            or request.user.is_moderator
         )
 
 

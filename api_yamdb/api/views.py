@@ -10,6 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from review.models import Titles, Category, Genre, Reviews, Comments
 from users.models import CustomUser as User
@@ -94,13 +95,60 @@ class GenreViewSet(
         serializer.save()
 
 
+# class TitlesViewSet(
+#     mixins.CreateModelMixin,
+#     mixins.RetrieveModelMixin,
+#     mixins.UpdateModelMixin,  # Разрешаем PATCH, но не PUT
+#     mixins.DestroyModelMixin,
+#     mixins.ListModelMixin,
+#     viewsets.GenericViewSet
+# ):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all()
     serializer_class = TitlesSerializer
     permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'year', 'genre__slug', 'category__slug']
+    ordering_fields = ['name', 'year']
+
+    # ограничиваем методы - убираем PUT
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        queryset = Titles.objects.all()
+        
+        # Фильтрация по genre slug
+        genre_slug = self.request.query_params.get('genre')
+        if genre_slug:
+            queryset = queryset.filter(genre__slug=genre_slug)
+        
+        # Фильтрация по category slug
+        category_slug = self.request.query_params.get('category')
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        
+        # Фильтрация по году
+        year = self.request.query_params.get('year')
+        if year:
+            queryset = queryset.filter(year=year)
+        
+        # Фильтрация по названию
+        name = self.request.query_params.get('name')
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        
+        return queryset.distinct()
 
     def perform_create(self, serializer):
         serializer.save()
+
+# class TitlesViewSet(viewsets.ModelViewSet):
+#     queryset = Titles.objects.all()
+#     serializer_class = TitlesSerializer
+#     permission_classes = [IsAdminOrReadOnly]
+
+#     def perform_create(self, serializer):
+#         serializer.save()
 
 # class CategoryViewSet(viewsets.ModelViewSet):
 #     queryset = Category.objects.all()
@@ -130,6 +178,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
@@ -138,12 +187,34 @@ class ReviewsViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Titles, id=title_id)
+        
+        # Проверим, не оставлял ли пользователь уже отзыв
+        if Reviews.objects.filter(title=title, author=self.request.user).exists():
+            raise ValidationError("Вы уже оставляли отзыв на это произведение")
+        
         serializer.save(author=self.request.user, title=title)
+
+# class ReviewsViewSet(viewsets.ModelViewSet):
+#     serializer_class = ReviewsSerializer
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+
+#     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+#     def get_queryset(self):
+#         title_id = self.kwargs.get('title_id')
+#         return Reviews.objects.filter(title_id=title_id)
+
+#     def perform_create(self, serializer):
+#         title_id = self.kwargs.get('title_id')
+#         title = get_object_or_404(Titles, id=title_id)
+#         serializer.save(author=self.request.user, title=title)
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentsSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         review_id = self.kwargs.get('review_id')

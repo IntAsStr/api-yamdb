@@ -61,6 +61,24 @@ class TitlesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Titles
         fields = ('id', 'name', 'year', 'description', 'category', 'genre')
+    
+    def to_representation(self, instance):  #m
+        # Получаем стандартное представление
+        representation = super().to_representation(instance)
+        
+        # Заменяем slug категории на полный объект
+        representation['category'] = {
+            'name': instance.category.name,
+            'slug': instance.category.slug
+        }
+        
+        # Заменяем slug жанров на полные объекты
+        representation['genre'] = [
+            {'name': genre.name, 'slug': genre.slug}
+            for genre in instance.genre.all()
+        ]
+        
+        return representation
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -87,7 +105,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = Reviews
-        fields = ('id', 'title', 'text', 'score', 'author', 'pub_date')
+        fields = ('id', 'text', 'score', 'author', 'pub_date')  # # Убрать 'title'
         read_only_fields = ('author', 'pub_date')
     
     def validate_score(self, value):
