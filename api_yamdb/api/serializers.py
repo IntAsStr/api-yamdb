@@ -60,18 +60,13 @@ class TitlesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Titles
-        fields = ('id', 'title', 'year', 'description', 'category', 'genre')
+        fields = ('id', 'name', 'year', 'description', 'category', 'genre')
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ('id', 'title', 'slug')
-
-    def validate_slug(self, value):
-        if not value.islower():
-            raise serializers.ValidationError("Slug должен быть в нижнем регистре.")
-        return value
+        fields = ('name', 'slug')
 
 
 class CommentsSerializer(serializers.ModelSerializer):
@@ -104,7 +99,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ('id', 'title', 'slug')
+        fields = ('name', 'slug')
 
     def validate_slug(self, value):
         if not value.islower():

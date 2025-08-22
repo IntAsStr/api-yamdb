@@ -43,7 +43,7 @@ class Genre(models.Model):
 
 
 class Titles(models.Model):
-    title = models.CharField('Произведение', max_length=64, help_text='Выберите название произведения')
+    name = models.CharField('Произведение', max_length=64, help_text='Выберите название произведения')
     year = models.IntegerField('Год произведения', null=True, blank=True)
     description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
@@ -64,7 +64,7 @@ class Titles(models.Model):
         verbose_name_plural = 'Произведения'
 
     def __str__(self):
-        return self.title[:20]
+        return self.name[:20]
 
 
 class Reviews(models.Model):
