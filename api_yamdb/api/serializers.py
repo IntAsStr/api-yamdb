@@ -49,16 +49,15 @@ class TitlesSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all(),
-        required=False,
-        allow_null=True
+        required=True  # Сделаем категорию обязательной
     )
-    
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
         many=True,
-        required=False
+        required=True  # Жанры тоже обязательны
     )
+
     class Meta:
         model = Titles
         fields = ('id', 'title', 'year', 'description', 'category', 'genre')
@@ -70,11 +69,10 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'slug')
 
     def validate_slug(self, value):
-        # Кастомная валидация slug
         if not value.islower():
-            raise serializers.ValidationError("Slug должен быть в нижнем регистре")
+            raise serializers.ValidationError("Slug должен быть в нижнем регистре.")
         return value
-    
+
 
 class CommentsSerializer(serializers.ModelSerializer):
     # показывать username вместо id
@@ -107,6 +105,11 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('id', 'title', 'slug')
+
+    def validate_slug(self, value):
+        if not value.islower():
+            raise serializers.ValidationError("Slug должен быть в нижнем регистре.")
+        return value
 
 
 class UserCreationSerializer(serializers.Serializer):

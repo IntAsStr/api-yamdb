@@ -64,12 +64,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
 
+    def perform_create(self, serializer):
+        serializer.save()
+
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
+
+    def perform_create(self, serializer):
+        serializer.save()
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
@@ -78,9 +84,31 @@ class TitlesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
     def perform_create(self, serializer):
-        category = get_object_or_404(Category, slug=self.request.data.get('category'))
-        genre = Genre.objects.filter(slug__in=self.request.data.getlist('genre'))
-        serializer.save(category=category, genre=genre)
+        serializer.save()
+
+# class CategoryViewSet(viewsets.ModelViewSet):
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
+#     permission_classes = [IsAdminOrReadOnly]
+#     lookup_field = 'slug'
+
+
+# class GenreViewSet(viewsets.ModelViewSet):
+#     queryset = Genre.objects.all()
+#     serializer_class = GenreSerializer
+#     permission_classes = [IsAdminOrReadOnly]
+#     lookup_field = 'slug'
+
+
+# class TitlesViewSet(viewsets.ModelViewSet):
+#     queryset = Titles.objects.all()
+#     serializer_class = TitlesSerializer
+#     permission_classes = [IsAdminOrReadOnly]
+
+#     def perform_create(self, serializer):
+#         category = get_object_or_404(Category, slug=self.request.data.get('category'))
+#         genre = Genre.objects.filter(slug__in=self.request.data.getlist('genre'))
+#         serializer.save(category=category, genre=genre)
 
 
 class ReviewsViewSet(viewsets.ModelViewSet):

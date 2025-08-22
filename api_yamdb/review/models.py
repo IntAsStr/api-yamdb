@@ -2,11 +2,17 @@ from django.db import models
 from django.conf import settings
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
 
+
+def validate_slug(value):
+    if not value.islower():
+        raise ValidationError("Slug должен быть в нижнем регистре.")
+    return value
 
 
 class Category(models.Model):
-    title = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
+    name = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
     slug = models.SlugField('Слаг', unique=True, help_text='Выберите Slug')
     
     class Meta:
@@ -14,23 +20,24 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title[:20]
+        return self.name[:20]
 
 
 class Genre(models.Model):
-    title = models.CharField(
+    name = models.CharField(
         'Название',
         max_length=64,
         help_text='Выберите название жанра'
     )
     slug = models.SlugField(max_length=20, unique=True, verbose_name='Слаг')
+    # slug = models.SlugField(max_length=20, unique=True, verbose_name='Слаг', validators=[validate_slug])
 
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
     def __str__(self):
-        return self.title[:20]
+        return self.name[:20]
 
 
 
@@ -121,3 +128,4 @@ class Comments(models.Model):
 
     def __str__(self):
         return self.text[:15]
+    
