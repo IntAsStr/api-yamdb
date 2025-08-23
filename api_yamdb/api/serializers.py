@@ -5,13 +5,36 @@ from review.models import Titles, Category, Genre, Comments, Reviews
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для модели пользователя.
+
+    Применяется для создания и отображения данных пользователя,
+    включая все основные поля профиля.
+    """
+
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
-
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role'
+        )
 
     def create(self, validated_data):
-        # Создаем пользователя с правильной ролью
+        """
+        Создает нового пользователя с заданными данными.
+
+        Args:
+            validated_data: Валидированные данные пользователя.
+                - username: Имя пользователя,
+                - email: Email адрес,
+                - first_name: Имя (опционально),
+                - last_name: Фамилия (опционально),
+                - bio: Биография (опционально),
+                - role: Роль пользователя (по умолчанию 'user').
+
+        Returns:
+            User: Созданный объект пользователя.
+        """
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -25,86 +48,141 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class UserMeSerializer(serializers.ModelSerializer):
-    """Упрощенный сериализатор для редактирования своего профиля"""
+    """
+    Упрощенный сериализатор для редактирования своего профиля.
+
+    Поле role только для чтения.
+    Пользователи не могут сами менять свою роль.
+    """
     role = serializers.CharField(read_only=True)
+
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username', 'email', 'first_name',
+            'last_name', 'bio', 'role'
+        )
         read_only_fields = ('role',)
 
     def validate_username(self, value):
+        """
+        Валидация имени пользователя.
+
+        Args:
+            value: Проверяемое имя пользователя.
+
+        Returns:
+            str: Валидное имя пользователя.
+
+        Raises:
+            ValidationError: Если имя пользователя невалидно.
+        """
         if value.lower() == 'me':
-            raise serializers.ValidationError("Нельзя использовать 'me' как username")
+            raise serializers.ValidationError(
+                "Нельзя использовать 'me' как username"
+            )
         if len(value) > 150:
-            raise serializers.ValidationError("Username не может быть длиннее 150 символов")
+            raise serializers.ValidationError(
+                "Username не может быть длиннее 150 символов"
+            )
         return value
-    
+
     def validate_email(self, value):
+        """
+        Валидация email адреса.
+
+        Args:
+            value: Проверяемый email адрес.
+
+        Returns:
+            str: Валидный email адрес.
+
+        Raises:
+            ValidationError: Если email невалиден.
+        """
         if len(value) > 254:
-            raise serializers.ValidationError("Email не может быть длиннее 254 символов")
+            raise serializers.ValidationError(
+                "Email не может быть длиннее 254 символов"
+            )
         return value
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для произведений.
+
+    Включает связанные поля категории и жанров через slug.
+    """
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all(),
         required=False,
         allow_null=True
     )
-    
+
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
         many=True,
         required=False
     )
+
     class Meta:
         model = Titles
         fields = ('id', 'name', 'year', 'description', 'category', 'genre')
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Сериализатор для категорий произведений."""
     class Meta:
         model = Category
         fields = ('name', 'slug')
 
-    
 
 class CommentsSerializer(serializers.ModelSerializer):
-    # показывать username вместо id
+    """Сериализатор для комментариев к отзывам."""
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
     )
+
     class Meta:
         model = Comments
         fields = ('id', 'author', 'review', 'text', 'pub_date')
 
 
 class ReviewsSerializer(serializers.ModelSerializer):
+    """Сериализатор для отзывов на произведения."""
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
     )
+
     class Meta:
         model = Reviews
         fields = ('id', 'title', 'text', 'score', 'author', 'pub_date')
         read_only_fields = ('author', 'pub_date')
-    
+
     def validate_score(self, value):
+        """Валидация оценки отзыва."""
         if value < 1 or value > 10:
             raise serializers.ValidationError("Оценка должна быть от 1 до 10")
         return value
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    """Сериализатор для жанров произведений."""
     class Meta:
         model = Genre
         fields = ('name', 'slug')
 
 
 class UserCreationSerializer(serializers.Serializer):
+    """
+    Сериализатор для создания пользователя при регистрации.
+
+    Валилирует email и username при первоначальной регистрации.
+    """
     email = serializers.EmailField(required=True)
     username = serializers.CharField(
         required=True,
@@ -118,12 +196,18 @@ class UserCreationSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         if value.lower() == 'me':
-            raise serializers.ValidationError("Нельзя использовать 'me' как username")
+            raise serializers.ValidationError(
+                "Нельзя использовать 'me' как username"
+            )
         if len(value) > 150:
-            raise serializers.ValidationError("Username не может быть длиннее 150 символов")
+            raise serializers.ValidationError(
+                "Username не может быть длиннее 150 символов"
+            )
         return value
-    
+
     def validate_email(self, value):
         if len(value) > 254:
-            raise serializers.ValidationError("Email не может быть длиннее 254 символов")
+            raise serializers.ValidationError(
+                "Email не может быть длиннее 254 символов"
+            )
         return value

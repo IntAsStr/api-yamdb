@@ -4,11 +4,13 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 
-
 class Category(models.Model):
-    name = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
+    """Модель категории произведений."""
+    name = models.CharField(
+        'Категория', max_length=64, help_text='Выберите категорию'
+    )
     slug = models.SlugField('Слаг', unique=True, help_text='Выберите Slug')
-    
+
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
@@ -18,6 +20,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель жанра произведений."""
     name = models.CharField(
         'Название',
         max_length=64,
@@ -33,10 +36,13 @@ class Genre(models.Model):
         return self.name[:20]
 
 
-
-
 class Titles(models.Model):
-    name = models.CharField('Произведение', max_length=64, help_text='Выберите название произведения')
+    """Модель произведения."""
+    name = models.CharField(
+        'Произведение',
+        max_length=64,
+        help_text='Выберите название произведения'
+    )
     year = models.IntegerField('Год произведения', null=True, blank=True)
     description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
@@ -61,6 +67,7 @@ class Titles(models.Model):
 
 
 class Reviews(models.Model):
+    """Модель отзыва на произведение."""
     title = models.ForeignKey(
         Titles,
         verbose_name='Произведение',
@@ -92,12 +99,14 @@ class Reviews(models.Model):
                 name='unique_review_per_author'
             )
         ]
-    
+
     def __str__(self):
+        # return self.title.name[:20]  # улучшение
         return self.title[:20]
 
 
 class Comments(models.Model):
+    """Модель комментария к отзыву."""
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name='Автор',
