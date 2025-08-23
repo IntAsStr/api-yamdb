@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from rest_framework import mixins
 from django.conf import settings
 from django.shortcuts import render
@@ -12,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
-from review.models import Titles, Category, Genre, Reviews, Comments
+from reviews.models import Title, Category, Genre, Review, Comments
 from users.models import CustomUser as User
 from .serializers import (
     TitlesSerializer, CategorySerializer, GenreSerializer,
@@ -104,7 +105,9 @@ class GenreViewSet(
 #     viewsets.GenericViewSet
 # ):
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    )
     serializer_class = TitlesSerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -115,7 +118,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
-        queryset = Titles.objects.all()
+        queryset = super().get_queryset()
         
         # Фильтрация по genre slug
         genre_slug = self.request.query_params.get('genre')
@@ -182,14 +185,14 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title_id = self.kwargs.get('title_id')
-        return Reviews.objects.filter(title_id=title_id)
+        return Review.objects.filter(title_id=title_id)
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
-        title = get_object_or_404(Titles, id=title_id)
+        title = get_object_or_404(Title, id=title_id)
         
         # Проверим, не оставлял ли пользователь уже отзыв
-        if Reviews.objects.filter(title=title, author=self.request.user).exists():
+        if Review.objects.filter(title=title, author=self.request.user).exists():
             raise ValidationError("Вы уже оставляли отзыв на это произведение")
         
         serializer.save(author=self.request.user, title=title)
@@ -222,7 +225,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Reviews, id=review_id)
+        review = get_object_or_404(Review, id=review_id)
         serializer.save(author=self.request.user, review=review)
 
 

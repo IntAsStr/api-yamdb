@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from users.models import CustomUser as User
-from review.models import Titles, Category, Genre, Comments, Reviews
+from reviews.models import Title, Category, Genre, Comments, Review
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -57,10 +57,11 @@ class TitlesSerializer(serializers.ModelSerializer):
         many=True,
         required=True  # Жанры тоже обязательны
     )
+    rating = serializers.FloatField(read_only=True, allow_null=True)
 
     class Meta:
-        model = Titles
-        fields = ('id', 'name', 'year', 'description', 'category', 'genre')
+        model = Title
+        fields = ('id', 'name', 'year', 'description', 'category', 'genre', 'rating')
     
     def to_representation(self, instance):  #m
         # Получаем стандартное представление
@@ -104,11 +105,11 @@ class ReviewsSerializer(serializers.ModelSerializer):
         read_only=True
     )
     class Meta:
-        model = Reviews
+        model = Review
         fields = ('id', 'text', 'score', 'author', 'pub_date')  # # Убрать 'title'
         read_only_fields = ('author', 'pub_date')
     
-    def validate_score(self, value):
+    def validate_rating(self, value):
         if value < 1 or value > 10:
             raise serializers.ValidationError("Оценка должна быть от 1 до 10")
         return value
