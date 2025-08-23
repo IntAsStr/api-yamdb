@@ -96,14 +96,6 @@ class GenreViewSet(
         serializer.save()
 
 
-# class TitlesViewSet(
-#     mixins.CreateModelMixin,
-#     mixins.RetrieveModelMixin,
-#     mixins.UpdateModelMixin,  # Разрешаем PATCH, но не PUT
-#     mixins.DestroyModelMixin,
-#     mixins.ListModelMixin,
-#     viewsets.GenericViewSet
-# ):
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
@@ -145,38 +137,6 @@ class TitlesViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save()
 
-# class TitlesViewSet(viewsets.ModelViewSet):
-#     queryset = Titles.objects.all()
-#     serializer_class = TitlesSerializer
-#     permission_classes = [IsAdminOrReadOnly]
-
-#     def perform_create(self, serializer):
-#         serializer.save()
-
-# class CategoryViewSet(viewsets.ModelViewSet):
-#     queryset = Category.objects.all()
-#     serializer_class = CategorySerializer
-#     permission_classes = [IsAdminOrReadOnly]
-#     lookup_field = 'slug'
-
-
-# class GenreViewSet(viewsets.ModelViewSet):
-#     queryset = Genre.objects.all()
-#     serializer_class = GenreSerializer
-#     permission_classes = [IsAdminOrReadOnly]
-#     lookup_field = 'slug'
-
-
-# class TitlesViewSet(viewsets.ModelViewSet):
-#     queryset = Titles.objects.all()
-#     serializer_class = TitlesSerializer
-#     permission_classes = [IsAdminOrReadOnly]
-
-#     def perform_create(self, serializer):
-#         category = get_object_or_404(Category, slug=self.request.data.get('category'))
-#         genre = Genre.objects.filter(slug__in=self.request.data.getlist('genre'))
-#         serializer.save(category=category, genre=genre)
-
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewsSerializer
@@ -196,21 +156,6 @@ class ReviewsViewSet(viewsets.ModelViewSet):
             raise ValidationError("Вы уже оставляли отзыв на это произведение")
         
         serializer.save(author=self.request.user, title=title)
-
-# class ReviewsViewSet(viewsets.ModelViewSet):
-#     serializer_class = ReviewsSerializer
-#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
-
-#     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
-
-#     def get_queryset(self):
-#         title_id = self.kwargs.get('title_id')
-#         return Reviews.objects.filter(title_id=title_id)
-
-#     def perform_create(self, serializer):
-#         title_id = self.kwargs.get('title_id')
-#         title = get_object_or_404(Titles, id=title_id)
-#         serializer.save(author=self.request.user, title=title)
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
@@ -327,14 +272,12 @@ class TokenView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Проверяем код подтверждения
         if not default_token_generator.check_token(user, confirmation_code):
             return Response(
                 {'error': 'Неверный код подтверждения'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Генерация JWT токена
         if user.confirmation_code == confirmation_code:
             refresh = RefreshToken.for_user(user)
             return Response({

@@ -18,6 +18,7 @@ class Category(models.Model):
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+        ordering = ['name']
 
     def __str__(self):
         return self.name[:20]
@@ -35,6 +36,7 @@ class Genre(models.Model):
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+        ordering = ['name']
 
     def __str__(self):
         return self.name[:20]
@@ -62,6 +64,8 @@ class Title(models.Model):
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+        # ordering = ['name']
+        ordering = ['-year', 'name']
 
     def __str__(self):
         return self.name[:20]
@@ -74,7 +78,7 @@ class Review(models.Model):
         related_name='reviews',
         on_delete=models.CASCADE,
     )
-    text = models.TextField('Текс обзора')
+    text = models.TextField('Текст обзора')
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name='Автор',
@@ -93,6 +97,7 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Обзор'
         verbose_name_plural = 'Обзоры'
+        ordering = ['-pub_date']
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
@@ -115,7 +120,7 @@ class Comments(models.Model):
         verbose_name='Обзор',
         on_delete=models.SET_NULL,
         null=True)
-    text = models.TextField('Текст коментария')
+    text = models.TextField('Текст комментария')
     pub_date = models.DateTimeField(
         'Дата публикации комментария',
         auto_now_add=True,
