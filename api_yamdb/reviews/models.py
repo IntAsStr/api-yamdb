@@ -12,7 +12,10 @@ def validate_slug(value):
 
 
 class Category(models.Model):
-    name = models.CharField('Категория', max_length=64, help_text='Выберите категорию')
+    """Модель категории произведений."""
+    name = models.CharField(
+        'Категория', max_length=64, help_text='Выберите категорию'
+    )
     slug = models.SlugField('Слаг', unique=True, help_text='Выберите Slug')
     
     class Meta:
@@ -25,13 +28,13 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель жанра произведений."""
     name = models.CharField(
         'Название',
         max_length=64,
         help_text='Выберите название жанра'
     )
     slug = models.SlugField(max_length=20, unique=True, verbose_name='Слаг')
-    # slug = models.SlugField(max_length=20, unique=True, verbose_name='Слаг', validators=[validate_slug])
 
     class Meta:
         verbose_name = 'Жанр'
@@ -42,10 +45,12 @@ class Genre(models.Model):
         return self.name[:20]
 
 
-
-
 class Title(models.Model):
-    name = models.CharField('Произведение', max_length=64, help_text='Выберите название произведения')
+    """Модель произведения."""
+    name = models.CharField(
+        'Произведение', max_length=64,
+        help_text='Выберите название произведения'
+    )
     year = models.IntegerField('Год произведения', null=True, blank=True)
     description = models.TextField('Описание', blank=True)
     category = models.ForeignKey(
@@ -72,6 +77,7 @@ class Title(models.Model):
 
 
 class Review(models.Model):
+    """Модель отзыва на произведение."""
     title = models.ForeignKey(
         Title,
         verbose_name='Произведение',
@@ -104,7 +110,7 @@ class Review(models.Model):
                 name='unique_review_per_author'
             )
         ]
-    
+
     def __str__(self):
         return self.title[:20]
 
