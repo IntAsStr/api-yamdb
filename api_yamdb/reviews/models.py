@@ -1,14 +1,6 @@
-from django.db import models
 from django.conf import settings
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.core.exceptions import ValidationError
-
-
-def validate_slug(value):
-    if not value.islower():
-        raise ValidationError("Slug должен быть в нижнем регистре.")
-    return value
+from django.db import models
 
 
 class Category(models.Model):
@@ -17,7 +9,7 @@ class Category(models.Model):
         'Категория', max_length=64, help_text='Выберите категорию'
     )
     slug = models.SlugField('Слаг', unique=True, help_text='Выберите Slug')
-    
+
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'

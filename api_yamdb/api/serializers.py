@@ -1,7 +1,7 @@
-from rest_framework import serializers
 from django.core.validators import RegexValidator
+from rest_framework import serializers
+from reviews.models import Category, Comments, Genre, Review, Title
 from users.models import CustomUser as User
-from reviews.models import Title, Category, Genre, Comments, Review
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -85,7 +85,7 @@ class UserMeSerializer(serializers.ModelSerializer):
                 "Username не может быть длиннее 150 символов"
             )
         return value
-    
+
     def validate_email(self, value):
         """
         Валидация email адреса.
@@ -199,7 +199,9 @@ class GenreSerializer(serializers.ModelSerializer):
 
     def validate_slug(self, value):
         if not value.islower():
-            raise serializers.ValidationError("Slug должен быть в нижнем регистре.")
+            raise serializers.ValidationError(
+                "Slug должен быть в нижнем регистре."
+            )
         return value
 
 
@@ -222,12 +224,18 @@ class UserCreationSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         if value.lower() == 'me':
-            raise serializers.ValidationError("Нельзя использовать 'me' как username")
+            raise serializers.ValidationError(
+                "Нельзя использовать 'me' как username"
+            )
         if len(value) > 150:
-            raise serializers.ValidationError("Username не может быть длиннее 150 символов")
+            raise serializers.ValidationError(
+                "Username не может быть длиннее 150 символов"
+            )
         return value
 
     def validate_email(self, value):
         if len(value) > 254:
-            raise serializers.ValidationError("Email не может быть длиннее 254 символов")
+            raise serializers.ValidationError(
+                "Email не может быть длиннее 254 символов"
+            )
         return value

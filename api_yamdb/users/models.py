@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.core.validators import RegexValidator
+from django.db import models
 
 
 class CustomUser(AbstractUser):
@@ -15,7 +15,7 @@ class CustomUser(AbstractUser):
         blank=False,
         null=False
     )
-     
+
     username = models.CharField(
         verbose_name='Имя пользователя',
         max_length=150,
@@ -51,11 +51,10 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-
     @property
     def is_user(self):
         return self.role == 'user'
-    
+
     @property
     def is_moderator(self):
         return self.role == 'moderator'
@@ -74,6 +73,6 @@ class CustomUser(AbstractUser):
                 name='unique_username_email'
             )
         ]
-    
+
     def __str__(self):
         return self.email

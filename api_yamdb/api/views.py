@@ -1,28 +1,24 @@
-from django.db.models import Avg
-from rest_framework import mixins
 from django.conf import settings
-from django.shortcuts import render
-from rest_framework.views import APIView
-from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework import viewsets, permissions, status, filters
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from rest_framework.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from reviews.models import Title, Category, Genre, Review, Comments
+from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from reviews.models import Category, Comments, Genre, Review, Title
 from users.models import CustomUser as User
-from .serializers import (
-    TitlesSerializer, CategorySerializer, GenreSerializer,
-    ReviewsSerializer, CommentsSerializer, CustomUserSerializer,
-    UserMeSerializer, UserCreationSerializer,
-)
-from .permissions import (
-    IsAdminOrReadOnly, IsAuthorOrReadOnly, IsAdmin, IsModerator
-)
+
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrReadOnly
+from .serializers import (CategorySerializer, CommentsSerializer,
+                          CustomUserSerializer, GenreSerializer,
+                          ReviewsSerializer, TitlesSerializer,
+                          UserCreationSerializer, UserMeSerializer)
 
 
 class StandardPagination(PageNumberPagination):
@@ -60,8 +56,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
         elif request.method in ['PATCH', 'PUT']:
             serializer = UserMeSerializer(
-                user, 
-                data=request.data, 
+                user,
+                data=request.data,
                 partial=request.method == 'PATCH'
             )
             if serializer.is_valid():
@@ -231,7 +227,7 @@ class SignUpView(APIView):
         username = serializer.validated_data.get('username')
 
         user_exists = User.objects.filter(
-            username=username, 
+            username=username,
             email=email
         ).first()
 
@@ -252,14 +248,18 @@ class SignUpView(APIView):
                 status=status.HTTP_200_OK
             )
 
-        if User.objects.filter(email=email).exclude(username=username).exists():
+        if User.objects.filter(email=email).exclude(
+            username=username
+        ).exists():
             return Response(
                 {'error': 'Пользователь с таким email уже существует'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        if User.objects.filter(username=username).exclude(email=email).exists():
+        if User.objects.filter(username=username).exclude(
+            email=email
+        ).exists():
             return Response(
-                {'error': 'Пользователь с таким username уже существует'}, 
+                {'error': 'Пользователь с таким username уже существует'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

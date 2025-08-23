@@ -21,8 +21,8 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             bool: True если разрешено, False если запрещено.
         """
         return (
-            request.method in permissions.SAFE_METHODS or
-            (request.user.is_authenticated and request.user.is_admin)
+            request.method in permissions.SAFE_METHODS
+            or (request.user.is_authenticated and request.user.is_admin)
         )
 
 
