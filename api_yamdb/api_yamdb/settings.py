@@ -1,5 +1,5 @@
-from pathlib import Path
 from datetime import timedelta
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'users.apps.UsersConfig',
-    'review.apps.ReviewConfig',
+    'reviews.apps.ReviewsConfig',
     'api.apps.ApiConfig',
 ]
 
@@ -124,5 +124,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 DEFAULT_FROM_EMAIL = 'noreply@yamdb.ru'
