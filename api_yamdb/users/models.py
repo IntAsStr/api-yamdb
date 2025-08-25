@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
-from .constants import BIO_MAX_LENGTH, USERNAME_MAX_LENGTH, USER_ROLE_CHOICES
+from .constants import BIO_MAX_LENGTH, USER_ROLE_CHOICES, USERNAME_MAX_LENGTH
 
 
 class CustomUser(AbstractUser):
