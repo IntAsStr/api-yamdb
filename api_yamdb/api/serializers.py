@@ -103,7 +103,8 @@ class TitlesSerializer(serializers.ModelSerializer):
         """Динамически меняем поле category в зависимости от операции"""
         super().__init__(*args, **kwargs)
 
-        if self.context.get('request') and self.context['request'].method in ['POST', 'PUT', 'PATCH']:
+        request = self.context.get('request')
+        if request and request.method in ['POST', 'PUT', 'PATCH']:
             self.fields['category'] = serializers.SlugRelatedField(
                 slug_field='slug',
                 queryset=Category.objects.all()

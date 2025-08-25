@@ -41,7 +41,7 @@ class Genre(models.Model):
     )
     slug = models.SlugField(
         max_length=SLUG_MAX_LENGTH,
-        unique=True, 
+        unique=True,
         verbose_name='Слаг'
     )
 
