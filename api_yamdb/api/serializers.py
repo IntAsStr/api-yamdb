@@ -1,6 +1,8 @@
 from django.core.validators import RegexValidator
+
 from rest_framework import serializers
-from reviews.models import Category, Comments, Genre, Review, Title
+
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import CustomUser as User
 
 
@@ -19,21 +21,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        """
-        Создает нового пользователя с заданными данными.
-
-        Args:
-            validated_data: Валидированные данные пользователя.
-                - username: Имя пользователя,
-                - email: Email адрес,
-                - first_name: Имя (опционально),
-                - last_name: Фамилия (опционально),
-                - bio: Биография (опционально),
-                - role: Роль пользователя (по умолчанию 'user').
-
-        Returns:
-            User: Созданный объект пользователя.
-        """
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -63,45 +50,24 @@ class UserMeSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('role',)
 
-    def validate_username(self, value):
-        """
-        Валидация имени пользователя.
 
-        Args:
-            value: Проверяемое имя пользователя.
+class CategorySerializer(serializers.ModelSerializer):
+    """Сериализатор для категорий произведений."""
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
 
-        Returns:
-            str: Валидное имя пользователя.
 
-        Raises:
-            ValidationError: Если имя пользователя невалидно.
-        """
-        if value.lower() == 'me':
+class GenreSerializer(serializers.ModelSerializer):
+    """Сериализатор для жанров произведений."""
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
+
+    def validate_slug(self, value):
+        if not value.islower():
             raise serializers.ValidationError(
-                "Нельзя использовать 'me' как username"
-            )
-        if len(value) > 150:
-            raise serializers.ValidationError(
-                "Username не может быть длиннее 150 символов"
-            )
-        return value
-
-    def validate_email(self, value):
-        """
-        Валидация email адреса.
-
-        Args:
-            value: Проверяемый email адрес.
-
-        Returns:
-            str: Валидный email адрес.
-
-        Raises:
-            ValidationError: Если email невалиден.
-        """
-        if len(value) > 254:
-            raise serializers.ValidationError(
-                "Email не может быть длиннее 254 символов"
+                "Slug должен быть в нижнем регистре."
             )
         return value
 
@@ -109,55 +75,47 @@ class UserMeSerializer(serializers.ModelSerializer):
 class TitlesSerializer(serializers.ModelSerializer):
     """
     Сериализатор для произведений.
-
-    Включает связанные поля категории и жанров через slug,
-    а также вычисляемое поле рейтинга.
     """
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all(),
-        required=True
+        write_only=True
     )
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
         many=True,
-        required=True
+        write_only=True
     )
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
     rating = serializers.FloatField(read_only=True, allow_null=True)
 
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'description', 'category', 'genre', 'rating')
+            'id', 'name', 'year', 'description',
+            'category', 'genre', 'rating'
+        )
 
-    def to_representation(self, instance):
-        """
-        Преобразует объект в словарь для сериализации.
+    def __init__(self, *args, **kwargs):
+        """Динамически меняем поле category в зависимости от операции"""
+        super().__init__(*args, **kwargs)
 
-        Заменяет slug категорий и жанров на полные объекты
-        с названиями и слагами.
-        """
-        representation = super().to_representation(instance)
-
-        representation['category'] = {
-            'name': instance.category.name,
-            'slug': instance.category.slug
-        }
-
-        representation['genre'] = [
-            {'name': genre.name, 'slug': genre.slug}
-            for genre in instance.genre.all()
-        ]
-
-        return representation
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    """Сериализатор для категорий произведений."""
-    class Meta:
-        model = Category
-        fields = ('name', 'slug')
+        if self.context.get('request') and self.context['request'].method in ['POST', 'PUT', 'PATCH']:
+            self.fields['category'] = serializers.SlugRelatedField(
+                slug_field='slug',
+                queryset=Category.objects.all()
+            )
+            self.fields['genre'] = serializers.SlugRelatedField(
+                slug_field='slug',
+                queryset=Genre.objects.all(),
+                many=True
+            )
+        else:
+            self.fields['category'] = CategorySerializer(read_only=True)
+            self.fields['genre'] = GenreSerializer(many=True, read_only=True)
 
 
 class CommentsSerializer(serializers.ModelSerializer):
@@ -168,7 +126,7 @@ class CommentsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Comments
+        model = Comment
         fields = ('id', 'author', 'review', 'text', 'pub_date')
 
 
@@ -188,20 +146,6 @@ class ReviewsSerializer(serializers.ModelSerializer):
         """Валидация оценки отзыва."""
         if value < 1 or value > 10:
             raise serializers.ValidationError("Оценка должна быть от 1 до 10")
-        return value
-
-
-class GenreSerializer(serializers.ModelSerializer):
-    """Сериализатор для жанров произведений."""
-    class Meta:
-        model = Genre
-        fields = ('name', 'slug')
-
-    def validate_slug(self, value):
-        if not value.islower():
-            raise serializers.ValidationError(
-                "Slug должен быть в нижнем регистре."
-            )
         return value
 
 
