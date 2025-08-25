@@ -7,14 +7,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 
-from reviews.models import Category, Comments, Genre, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import CustomUser as User
 
 from .filters import TitleFilter
@@ -128,7 +127,11 @@ class TitlesViewSet(viewsets.ModelViewSet):
     )
     serializer_class = TitlesSerializer
     permission_classes = [IsAdminOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    ]
     filterset_class = TitleFilter
     search_fields = ['name', 'year', 'genre__slug', 'category__slug']
     ordering_fields = ['name', 'year']
@@ -175,7 +178,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Возвращает queryset комментариев для отзыва."""
         review_id = self.kwargs.get('review_id')
-        return Comments.objects.filter(
+        return Comment.objects.filter(
             review_id=review_id
         ).select_related('author')
 
@@ -215,7 +218,7 @@ class SignUpView(APIView):
         ).first()
 
         if user_exists:
-            confirm_code = user_exists.confirmation_code
+            confirm_code = default_token_generator.make_token(user_exists)
 
             send_mail(
                 'Confirmation code',
@@ -250,8 +253,6 @@ class SignUpView(APIView):
             password=None
         )
         confirm_code = default_token_generator.make_token(user)
-        user.confirmation_code = confirm_code
-        user.save()
 
         send_mail(
             'Confirmation code',
@@ -298,12 +299,6 @@ class TokenView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if user.confirmation_code != confirmation_code:
-            return Response(
-                {'error': 'Неверный код подтверждения'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
         refresh = RefreshToken.for_user(user)
         return Response({
             'token': str(refresh.access_token),

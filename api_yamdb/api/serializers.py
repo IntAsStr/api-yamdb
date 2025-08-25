@@ -2,7 +2,7 @@ from django.core.validators import RegexValidator
 
 from rest_framework import serializers
 
-from reviews.models import Category, Comments, Genre, Review, Title
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import CustomUser as User
 
 
@@ -76,36 +76,33 @@ class TitlesSerializer(serializers.ModelSerializer):
     """
     Сериализатор для произведений.
     """
-    # Для записи (тесты ожидают эти имена)
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all(),
-        write_only=True  # ← делаем ТОЛЬКО для записи
+        write_only=True
     )
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
         many=True,
-        write_only=True  # ← делаем ТОЛЬКО для записи
+        write_only=True
     )
-    
-    # Для чтения (основные поля)
-    category = CategorySerializer(read_only=True)  # ← переопределяем для чтения
-    genre = GenreSerializer(many=True, read_only=True)  # ← переопределяем для чтения
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
     rating = serializers.FloatField(read_only=True, allow_null=True)
 
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'description', 
+            'id', 'name', 'year', 'description',
             'category', 'genre', 'rating'
         )
 
     def __init__(self, *args, **kwargs):
         """Динамически меняем поле category в зависимости от операции"""
         super().__init__(*args, **kwargs)
-        
-        # Для записи используем SlugRelatedField
+
         if self.context.get('request') and self.context['request'].method in ['POST', 'PUT', 'PATCH']:
             self.fields['category'] = serializers.SlugRelatedField(
                 slug_field='slug',
@@ -116,7 +113,6 @@ class TitlesSerializer(serializers.ModelSerializer):
                 queryset=Genre.objects.all(),
                 many=True
             )
-        # Для чтения используем Serializer
         else:
             self.fields['category'] = CategorySerializer(read_only=True)
             self.fields['genre'] = GenreSerializer(many=True, read_only=True)
@@ -130,7 +126,7 @@ class CommentsSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Comments
+        model = Comment
         fields = ('id', 'author', 'review', 'text', 'pub_date')
 
 

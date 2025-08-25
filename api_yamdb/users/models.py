@@ -2,26 +2,19 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
+from .constants import BIO_MAX_LENGTH, USERNAME_MAX_LENGTH, USER_ROLE_CHOICES
+
 
 class CustomUser(AbstractUser):
-    CHOICES = [
-        ('user', 'user'),
-        ('admin', 'admin'),
-        ('moderator', 'moderator'),
-    ]
     email = models.EmailField(
         verbose_name='Электронная почта',
         unique=True,
-        blank=False,
-        null=False
     )
 
     username = models.CharField(
         verbose_name='Имя пользователя',
-        max_length=150,
+        max_length=USERNAME_MAX_LENGTH,
         unique=True,
-        blank=False,
-        null=False,
         validators=[RegexValidator(
             regex=r'^[\w.@+-]+\Z',
             message='Username содержит недопустимые символы'
@@ -29,23 +22,15 @@ class CustomUser(AbstractUser):
     )
     role = models.CharField(
         verbose_name='Роль',
-        choices=CHOICES,
+        choices=USER_ROLE_CHOICES,
         default='user',
         max_length=20
     )
     bio = models.TextField(
         verbose_name='Биография',
-        max_length=264,
+        max_length=BIO_MAX_LENGTH,
         blank=True,
         null=True
-    )
-    confirmation_code = models.CharField(
-        verbose_name='Код подтверждения',
-        max_length=200,
-        editable=False,
-        null=True,
-        blank=True,
-        unique=True
     )
 
     USERNAME_FIELD = 'email'
@@ -61,7 +46,7 @@ class CustomUser(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == 'admin' or self.is_superuser or self.is_staff
+        return self.role == 'admin' or self.is_superuser
 
     class Meta:
         verbose_name = 'Пользователь'
