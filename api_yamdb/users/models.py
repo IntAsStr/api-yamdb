@@ -36,6 +36,16 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['username', 'email'],
+                name='unique_username_email'
+            )
+        ]
+
     @property
     def is_user(self):
         return self.role == 'user'
@@ -47,17 +57,6 @@ class CustomUser(AbstractUser):
     @property
     def is_admin(self):
         return self.role == 'admin' or self.is_superuser
-
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-        ordering = ['email']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['username', 'email'],
-                name='unique_username_email'
-            )
-        ]
 
     def __str__(self):
         return self.email
