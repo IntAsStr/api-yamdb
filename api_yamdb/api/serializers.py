@@ -127,6 +127,7 @@ class CommentsSerializer(serializers.ModelSerializer):
         read_only=True
     )
     review = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Comment
         fields = ('id', 'author', 'review', 'text', 'pub_date')
