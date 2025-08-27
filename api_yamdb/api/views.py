@@ -32,9 +32,8 @@ from .serializers import (
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления пользователями.
-
-    Только для администраторов. Поддержка поиска по username и email.
     """
+
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     permission_classes = [IsAdmin]
@@ -79,9 +78,8 @@ class CategoryViewSet(
 ):
     """
     ViewSet для управления категориями.
-
-    Поддержка создания, удаления и получения списка категорий.
     """
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -99,9 +97,8 @@ class GenreViewSet(
 ):
     """
     ViewSet для управления жанрами.
-
-    Поддержка создания, удаления и получения списка жанров.
     """
+
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -113,10 +110,8 @@ class GenreViewSet(
 class TitlesViewSet(viewsets.ModelViewSet):
     """
     ViewSet для управления произведениями.
-
-    Поддержка всех CRUD операций для произведений.
-    При создании автоматически связывает категорию и жанры по slug.
     """
+
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     ).select_related(
@@ -160,7 +155,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
         if Review.objects.filter(
             title=title, author=self.request.user
         ).exists():
-            raise ValidationError("Вы уже оставляли отзыв на это произведение")
+            raise ValidationError('Вы уже оставляли отзыв на это произведение')
 
         serializer.save(author=self.request.user, title=title)
 
@@ -184,9 +179,8 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """
         Создает комментарий для отзыва.
-
-        Возвращает ошибку 404, если отзыв не найден.
         """
+
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Review, id=review_id)
         serializer.save(author=self.request.user, review=review)
@@ -195,9 +189,8 @@ class CommentsViewSet(viewsets.ModelViewSet):
 class SignUpView(APIView):
     """
     APIView для регистрации новых пользователей.
-
-    Для подтверждения регистрации отправляется confirmation code на email.
     """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -217,15 +210,6 @@ class SignUpView(APIView):
         ).first()
 
         if user_exists:
-            confirm_code = default_token_generator.make_token(user_exists)
-
-            send_mail(
-                'Confirmation code',
-                f'Your confirmation code: {confirm_code}',
-                None,
-                [email],
-                fail_silently=False
-            )
             return Response(
                 {'email': email, 'username': username},
                 status=status.HTTP_200_OK
@@ -269,9 +253,8 @@ class SignUpView(APIView):
 class TokenView(APIView):
     """
     APIView для получения JWT токена.
-
-    Замена confirmation code на access token для аутентификации.
     """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -284,13 +267,7 @@ class TokenView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'Пользователь не найден'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        user = get_object_or_404(User, username=username)
 
         if not default_token_generator.check_token(user, confirmation_code):
             return Response(

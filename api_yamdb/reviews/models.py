@@ -151,14 +151,14 @@ class Comment(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name='Автор',
-        on_delete=models.SET_NULL,
-        null=True
+        on_delete=models.CASCADE,
+        related_name='comments'
     )
     review = models.ForeignKey(
         Review,
         verbose_name='Обзор',
-        on_delete=models.SET_NULL,
-        null=True
+        on_delete=models.CASCADE,
+        related_name='comments'
     )
     text = models.TextField('Текст комментария')
     pub_date = models.DateTimeField(
@@ -167,7 +167,6 @@ class Comment(models.Model):
     )
 
     class Meta:
-        ordering = ['pub_date']
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
