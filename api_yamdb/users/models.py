@@ -30,7 +30,6 @@ class CustomUser(AbstractUser):
         verbose_name='Биография',
         max_length=BIO_MAX_LENGTH,
         blank=True,
-        null=True
     )
 
     USERNAME_FIELD = 'email'

@@ -30,9 +30,7 @@ from .serializers import (
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet для управления пользователями.
-    """
+    """ViewSet для управления пользователями."""
 
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
@@ -51,6 +49,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         """Возвращает или обновляет данные текущего пользователя."""
+
         user = request.user
         if request.method == 'GET':
             serializer = UserMeSerializer(user)
@@ -76,9 +75,7 @@ class CategoryViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    ViewSet для управления категориями.
-    """
+    """ViewSet для управления категориями."""
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -95,9 +92,7 @@ class GenreViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    ViewSet для управления жанрами.
-    """
+    """ViewSet для управления жанрами."""
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -108,9 +103,7 @@ class GenreViewSet(
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet для управления произведениями.
-    """
+    """ViewSet для управления произведениями."""
 
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
@@ -134,6 +127,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
 class ReviewsViewSet(viewsets.ModelViewSet):
     """ViewSet для управления отзывами на произведения."""
+
     serializer_class = ReviewsSerializer
     permission_classes = [
         permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly
@@ -142,6 +136,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает queryset отзывов для конкретного произведения."""
+
         title_id = self.kwargs.get('title_id')
         return Review.objects.filter(
             title_id=title_id
@@ -149,6 +144,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Создает отзыв для конкретного произведения."""
+
         title_id = self.kwargs.get('title_id')
         title = get_object_or_404(Title, id=title_id)
 
@@ -162,6 +158,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 
 class CommentsViewSet(viewsets.ModelViewSet):
     """ViewSet для управления комментариями к отзывам"""
+
     serializer_class = CommentsSerializer
     permission_classes = [
         permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly
@@ -171,15 +168,14 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает queryset комментариев для отзыва."""
+
         review_id = self.kwargs.get('review_id')
         return Comment.objects.filter(
             review_id=review_id
         ).select_related('author')
 
     def perform_create(self, serializer):
-        """
-        Создает комментарий для отзыва.
-        """
+        """Создает комментарий для отзыва."""
 
         review_id = self.kwargs.get('review_id')
         review = get_object_or_404(Review, id=review_id)
@@ -187,9 +183,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
 
 class SignUpView(APIView):
-    """
-    APIView для регистрации новых пользователей.
-    """
+    """APIView для регистрации новых пользователей."""
 
     permission_classes = [AllowAny]
 
@@ -251,9 +245,7 @@ class SignUpView(APIView):
 
 
 class TokenView(APIView):
-    """
-    APIView для получения JWT токена.
-    """
+    """APIView для получения JWT токена."""
 
     permission_classes = [AllowAny]
 
