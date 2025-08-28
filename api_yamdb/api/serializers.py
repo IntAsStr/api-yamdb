@@ -7,9 +7,7 @@ from users.models import CustomUser as User
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для модели пользователя.
-    """
+    """Сериализатор для модели пользователя."""
 
     class Meta:
         model = User
@@ -32,9 +30,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class UserMeSerializer(serializers.ModelSerializer):
-    """
-    Упрощенный сериализатор для редактирования своего профиля.
-    """
+    """Упрощенный сериализатор для редактирования своего профиля."""
 
     role = serializers.CharField(read_only=True)
 
@@ -71,9 +67,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitlesSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для произведений.
-    """
+    """Сериализатор для произведений."""
 
     category = serializers.SlugRelatedField(
         slug_field='slug',
@@ -155,9 +149,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
 
 class UserCreationSerializer(serializers.Serializer):
-    """
-    Сериализатор для создания пользователя при регистрации.
-    """
+    """Сериализатор для создания пользователя при регистрации."""
 
     email = serializers.EmailField(required=True)
     username = serializers.CharField(
@@ -173,17 +165,17 @@ class UserCreationSerializer(serializers.Serializer):
     def validate_username(self, value):
         if value.lower() == 'me':
             raise serializers.ValidationError(
-                "Нельзя использовать 'me' как username"
+                'Нельзя использовать "me" как username'
             )
         if len(value) > 150:
             raise serializers.ValidationError(
-                "Username не может быть длиннее 150 символов"
+                'Username не может быть длиннее 150 символов'
             )
         return value
 
     def validate_email(self, value):
         if len(value) > 254:
             raise serializers.ValidationError(
-                "Email не может быть длиннее 254 символов"
+                'Email не может быть длиннее 254 символов'
             )
         return value

@@ -2,9 +2,7 @@ from rest_framework import permissions
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
-    """
-    Разрешает чтение всем пользователям, а изменения только администраторам.
-    """
+    """Разрешает чтение всем, а изменения только администраторам."""
 
     def has_permission(self, request, view):
         return (
@@ -14,9 +12,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
-    """
-    Разрешает чтение всем пользователям, а изменения- только автору объекта.
-    """
+    """Чтение для всех, изменение только для автора, админа или модератора."""
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -29,18 +25,14 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 
 
 class IsAdmin(permissions.BasePermission):
-    """
-    Permission для разрешения доступа только администраторам.
-    """
+    """Доступ только для администраторов."""
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.is_admin
 
 
 class IsModerator(permissions.BasePermission):
-    """
-    Permission для разрешения доступа только модераторам.
-    """
+    """Доступ только для модераторов."""
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.is_moderator
